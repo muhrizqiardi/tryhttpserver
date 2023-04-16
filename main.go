@@ -24,9 +24,9 @@ create table if not exists Todo (
 );`
 
 type Todo struct {
-	Id      string `json:"id"`
-	Content string `json:"content"`
-	Checked bool   `json:"checked"`
+	Id      string `json:"id" db:"id"`
+	Content string `json:"content" db:"content"`
+	Checked bool   `json:"checked" db:"checked"`
 }
 
 type ICreateTodo struct {
@@ -59,7 +59,6 @@ func createTodo(w http.ResponseWriter, req *http.Request) {
 	decodeError := json.NewDecoder(req.Body).Decode(body)
 
 	if decodeError != nil {
-		fmt.Println("error decoding")
 		http.Error(w, decodeError.Error(), http.StatusBadRequest)
 		return
 	}
@@ -82,7 +81,21 @@ func createTodo(w http.ResponseWriter, req *http.Request) {
 }
 
 func getManyTodo(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprintf(w, "Get many todo")
+	db := connectDb()
+
+	todos := []Todo{}
+
+	dbErr := db.Select(&todos, `SELECT id, "content", checked FROM public."todo"`)
+
+	if dbErr != nil {
+		log.Fatal(dbErr)
+		return
+	}
+
+	todosJson, _ := json.Marshal(todos)
+
+	w.Header().Set("Content-Type", "application/json")
+	fmt.Fprint(w, string(todosJson))
 }
 
 func getOneTodo(w http.ResponseWriter, req *http.Request) {
