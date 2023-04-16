@@ -99,7 +99,20 @@ func getManyTodo(w http.ResponseWriter, req *http.Request) {
 }
 
 func getOneTodo(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprintf(w, "Get todo")
+	db := connectDb()
+	vars := mux.Vars(req)
+	todo := Todo{}
+	dbErr := db.Get(&todo, `SELECT id, "content", checked FROM public."todo" WHERE id=$1`, vars["todoId"])
+
+	if dbErr != nil {
+		log.Fatal(dbErr)
+		return
+	}
+
+	todoJson, _ := json.Marshal(todo)
+
+	w.Header().Set("Content-Type", "application/json")
+	fmt.Fprint(w, string(todoJson))
 }
 
 func updateOneTodo(w http.ResponseWriter, req *http.Request) {
