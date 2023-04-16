@@ -116,7 +116,36 @@ func getOneTodo(w http.ResponseWriter, req *http.Request) {
 }
 
 func updateOneTodo(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprintf(w, "Update todo")
+	db := connectDb()
+	vars := mux.Vars(req)
+	body := &ICreateTodo{}
+
+	decodeError := json.NewDecoder(req.Body).Decode(body)
+
+	if decodeError != nil {
+		http.Error(w, decodeError.Error(), http.StatusBadRequest)
+		return
+	}
+
+	_, err := db.Exec(
+		`UPDATE public.todo
+			SET 
+				"content"=$2,
+				checked=$3
+			WHERE id=$1`,
+		vars["todoId"],
+		body.Content,
+		body.Checked,
+	)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	bodyJson, _ := json.Marshal(body)
+
+	w.Header().Set("Content-Type", "application/json")
+	fmt.Fprint(w, string(bodyJson))
 }
 
 func deleteOneTodo(w http.ResponseWriter, req *http.Request) {
