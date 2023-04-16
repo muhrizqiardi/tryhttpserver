@@ -149,6 +149,19 @@ func updateOneTodo(w http.ResponseWriter, req *http.Request) {
 }
 
 func deleteOneTodo(w http.ResponseWriter, req *http.Request) {
+	db := connectDb()
+	vars := mux.Vars(req)
+
+	_, err := db.Exec(
+		`DELETE FROM public.todo
+			WHERE id=$1`,
+		vars["todoId"],
+	)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	fmt.Fprintf(w, "Delete todo")
 }
 
